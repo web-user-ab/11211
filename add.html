@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Device</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    input, select, button, textarea { margin-top: 10px; display: block; width: 100%; padding: 8px; }
+    #preview { max-width: 150px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Add a New Device</h1>
+
+  <form id="deviceForm">
+    <label>Device Name:</label>
+    <input type="text" id="deviceName" required>
+
+    <label>Image:</label>
+    <input type="file" id="deviceImage" accept="image/*" required>
+    <img id="preview" src="#" alt="Preview" style="display:none;">
+
+    <label>Position:</label>
+    <select id="positionSelect">
+      <option value="">-- Create New --</option>
+    </select>
+    <input type="text" id="newPosition" placeholder="Enter new position">
+
+    <label>Sub-devices (comma-separated):</label>
+    <input type="text" id="subDevices">
+
+    <button type="submit">Save</button>
+    <button type="button" onclick="location.href='index.html'">Cancel</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("deviceForm");
+    const imgInput = document.getElementById("deviceImage");
+    const preview = document.getElementById("preview");
+    const posSelect = document.getElementById("positionSelect");
+    const roomData = JSON.parse(localStorage.getItem("roomData") || "{}");
+
+    // Load existing positions
+    for (const pos of Object.keys(roomData)) {
+      const opt = document.createElement("option");
+      opt.value = pos;
+      opt.textContent = pos;
+      posSelect.appendChild(opt);
+    }
+
+    // Preview uploaded image
+    imgInput.addEventListener("change", () => {
+      const file = imgInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          preview.src = e.target.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Form submit handler
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+
+      const name = document.getElementById("deviceName").value;
+      const subDevices = document.getElementById("subDevices").value.split(",").map(s => s.trim()).filter(s => s);
+      const image = preview.src;
+      const position = posSelect.value || document.getElementById("newPosition").value;
+
+      if (!position) return alert("You must select or create a position.");
+
+      if (!roomData[position]) roomData[position] = [];
+
+      roomData[position].push({ name, image, subs: subDevices });
+      localStorage.setItem("roomData", JSON.stringify(roomData));
+      location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
