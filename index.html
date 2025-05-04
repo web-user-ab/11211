@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Room Organizer</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      padding: 0;
       background: #f2f2f7;
       color: #111;
     }
@@ -22,7 +21,6 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
-      z-index: 10;
     }
 
     main {
@@ -40,29 +38,43 @@
       border-radius: 14px;
       font-size: 1.2rem;
       margin-bottom: 1rem;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
     }
 
     .position {
       background: white;
       border-radius: 16px;
-      padding: 1rem;
       margin-bottom: 1rem;
+      overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
     }
 
-    .position h2 {
-      margin-top: 0;
-      font-size: 1.4rem;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 0.5rem;
+    .position-header {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .device-list {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .device-list.expanded {
+      max-height: 1000px;
     }
 
     .device {
       display: flex;
-      align-items: center;
       gap: 1rem;
-      margin-top: 1rem;
+      padding: 1rem;
+      border-top: 1px solid #eee;
+      align-items: center;
     }
 
     .device img {
@@ -77,13 +89,30 @@
       flex: 1;
     }
 
-    ul {
-      padding-left: 1rem;
-      margin: 0.3rem 0 0;
+    .sub {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #e0e0e0;
+      margin: 4px 4px 0 0;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
     }
 
-    ul li {
-      font-size: 0.95rem;
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .delete {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -99,30 +128,74 @@
     const data = JSON.parse(localStorage.getItem("roomData") || "{}");
     const container = document.getElementById("positions");
 
-    if (Object.keys(data).length === 0) {
-      container.innerHTML = "<p style='text-align:center;'>No devices added yet.</p>";
-    } else {
+    function saveData(newData) {
+      localStorage.setItem("roomData", JSON.stringify(newData));
+    }
+
+    function render() {
+      container.innerHTML = "";
+
+      if (Object.keys(data).length === 0) {
+        container.innerHTML = "<p style='text-align:center;'>No devices added yet.</p>";
+        return;
+      }
+
       for (const [posName, devices] of Object.entries(data)) {
         const section = document.createElement("div");
         section.className = "position";
-        section.innerHTML = `<h2>${posName}</h2>`;
 
-        devices.forEach(device => {
+        const header = document.createElement("div");
+        header.className = "position-header";
+        header.innerHTML = `<span>${posName}</span><span style="font-size:1.5rem;">▾</span>`;
+        section.appendChild(header);
+
+        const deviceList = document.createElement("div");
+        deviceList.className = "device-list";
+
+        devices.forEach((device, index) => {
           const dev = document.createElement("div");
           dev.className = "device";
           dev.innerHTML = `
             <img src="${device.image}" alt="${device.name}" />
             <div class="device-info">
               <strong>${device.name}</strong><br>
-              ${device.subs.length ? "<ul>" + device.subs.map(s => `<li>${s}</li>`).join("") + "</ul>" : ""}
+              ${device.subs.map(sub => `<span class="sub" onclick="alert('Sub-device: ${sub}')">${sub}</span>`).join("")}
+            </div>
+            <div class="actions">
+              <button class="delete" onclick="deleteDevice('${posName}', ${index})">🗑</button>
             </div>
           `;
-          section.appendChild(dev);
+          deviceList.appendChild(dev);
         });
 
+        const delPositionBtn = document.createElement("button");
+        delPositionBtn.textContent = "🗑 Delete Position";
+        delPositionBtn.className = "delete";
+        delPositionBtn.style.margin = "1rem";
+        delPositionBtn.onclick = () => {
+          delete data[posName];
+          saveData(data);
+          render();
+        };
+        deviceList.appendChild(delPositionBtn);
+
+        header.addEventListener("click", () => {
+          deviceList.classList.toggle("expanded");
+        });
+
+        section.appendChild(deviceList);
         container.appendChild(section);
       }
     }
+
+    function deleteDevice(position, index) {
+      data[position].splice(index, 1);
+      if (data[position].length === 0) delete data[position];
+      saveData(data);
+      render();
+    }
+
+    render();
   </script>
 </body>
 </html>
