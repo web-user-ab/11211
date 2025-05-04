@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Room Organizer</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    h1 { text-align: center; }
+    .position { margin-top: 20px; background: white; padding: 15px; border-radius: 10px; }
+    .device { margin: 10px 0; padding: 10px; background: #ddd; border-radius: 5px; }
+    img { max-width: 100px; height: auto; }
+  </style>
+</head>
+<body>
+  <h1>Room Organizer</h1>
+
+  <button onclick="location.href='add.html'">Add New Device</button>
+
+  <div id="positions"></div>
+
+  <script>
+    const data = JSON.parse(localStorage.getItem("roomData") || "{}");
+    const container = document.getElementById("positions");
+
+    if (Object.keys(data).length === 0) {
+      container.innerHTML = "<p>No devices added yet.</p>";
+    } else {
+      for (const [posName, devices] of Object.entries(data)) {
+        const section = document.createElement("div");
+        section.className = "position";
+        section.innerHTML = `<h2>${posName}</h2>`;
+
+        devices.forEach(device => {
+          const dev = document.createElement("div");
+          dev.className = "device";
+          dev.innerHTML = `
+            <strong>${device.name}</strong><br>
+            <img src="${device.image}" alt="${device.name}"><br>
+            ${device.subs.length ? "<em>Sub-devices:</em><ul>" + device.subs.map(s => `<li>${s}</li>`).join("") + "</ul>" : ""}
+          `;
+          section.appendChild(dev);
+        });
+
+        container.appendChild(section);
+      }
+    }
+  </script>
+</body>
+</html>
